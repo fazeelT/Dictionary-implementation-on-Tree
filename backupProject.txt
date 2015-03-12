@@ -1,0 +1,210 @@
+
+import java.io.File;
+import java.util.Scanner;
+
+public class MUTOP2 {
+
+    public static void main(String[] args) {
+        Trie trie = new Trie();                        //Initialize new Trie
+        Scanner sc = new Scanner(System.in);           //User input expected
+        
+        String line = "";
+        boolean done = false;                          //End flag
+
+        while (!done) {
+            line = sc.nextLine();                      //Get user input
+            String[] tokens = line.split(" ");         //Tokenizer
+            switch (tokens[0]) {    
+                case "N": {                            //Print Name
+                    System.out.println("Muhammad Tola");
+
+                    break;
+                }
+                case "A": {                            //Insert the word
+                    String word = tokens[1];
+                    if (trie.insert(word)) {           //Insert Successful
+                        System.out.println("Word inserted");
+                    } else {                           //World already in the list
+                        System.out.println("Word already exists");
+                    }
+                    break;
+                }
+                case "D": {                            //Delete the word
+                    String word = tokens[1];
+                    if (trie.delete(word)) {           //Delete Successful
+                        System.out.println("Word deleted");
+                    } else {                           //Unsuccessful
+                        System.out.println("Word not present");
+                    }
+                    break;
+                }
+                case "S": {                            //Search for the word
+                    String word = tokens[1];           
+                    if (trie.isPresent(word)) {
+                        System.out.println("Word found");
+                    } else {
+                        System.out.println("Word not found");
+                    }
+                    break;
+                }
+                case "M": {                            //Print "Membership is ####" where #### is the number of words in the Trie
+                    System.out.format("Membership is %4d\n", trie.membership());
+                    break;
+                }
+
+                case "C": {                            // Check the space separated sequence of words wa, wb, wc, wd, we, ...
+                                   
+                     for(int i=1;i<tokens.length;i++)  //Get all the tokens
+                     if(!trie.isPresent(tokens[i]))    //Word notfound :(
+                     System.out.println("Spelling mistake " + tokens[i]);
+                     break;
+                }
+                case "L": {                            // Print a list of the elements of the Trie in alphabetical order, one word per line.
+                    trie.listAll();
+                    break;
+                }
+                case "E": {                            // The end of the input file
+                    done = true;
+                    break;
+                }
+            } // end of switch
+        }
+
+    }
+}
+
+class Trie {
+
+    Node root;
+    
+
+    public Trie() {
+        root = new Node();
+
+    }
+
+    boolean insert(String s) { // returns false if s is already present, true otherwise
+        if (isPresent(s)) {
+            return false;
+        }
+       
+        root.insert(s);
+        return true;
+
+    }
+
+    boolean isPresent(String s) { // returns true if s is present, false otherwise
+        
+        return root.isPresent(root,s);
+       /*current = root;
+        for (int i = 0; i < s.length(); i++) {
+            if (current.children[(int) s.charAt(i) - 97] == null) {
+                return false;
+            } else {
+                current = current.children[(int) s.charAt(i) - 97];
+            }
+
+        }
+        if (current.terminal == false) {
+            return false;
+        }
+
+        return true;*/
+    }
+
+    boolean delete(String s) { // returns false if s is not present, true otherwise
+        if (!isPresent(s)) {
+            return false;
+        }
+        root.delete(root,s);
+        return true;
+    }
+
+    int membership() { // returns the number of words in the data structure
+        return root.membership(root);
+    }
+
+    void listAll() { // list all members of the Trie in alphabetical orber
+        root.listAll(root, "");
+
+    }
+
+}
+
+class Node {
+
+    boolean terminal;
+    int outDegree;
+    Node[] children;
+
+    public Node() {
+        terminal = false;
+        outDegree = 0;
+        children = new Node[26];
+    }
+
+    public void insert(String s) {
+
+        if (children[(int) s.charAt(0) - 97] == null) {
+            children[(int) s.charAt(0) - 97] = new Node();
+            outDegree++;
+        }
+        if (s.length() > 1) {
+            children[(int) s.charAt(0) - 97].insert(s.substring(1));
+        } else {
+            children[(int) s.charAt(0) - 97].terminal = true;
+        }
+    }
+    public boolean isPresent(Node x,String s){
+        
+        if (children[s.charAt(0)-97]==null)
+            return false;
+        if (s.length() > 1)
+            return children[s.charAt(0)-97].isPresent(children[s.charAt(0)-97],s.substring(1));
+        if(children[s.charAt(0)-97].terminal!=true && s.length() == 1)
+            return false;
+        return true;
+        
+    }
+    public void delete(Node x, String s) {
+        if (s.length() > 1)
+            children[s.charAt(0)-97].delete(children[s.charAt(0)-97],s.substring(1));
+        else if(children[((int)s.charAt(0))-97].outDegree>0)
+            children[((int)s.charAt(0))-97].terminal =false;
+        else if(children[((int)s.charAt(0))-97].outDegree==0){
+            children[((int)s.charAt(0))-97]=null;
+            return;
+        }
+        if(children[s.charAt(0)-97].outDegree==0)
+            children[s.charAt(0)-97]=null;
+        }
+    
+
+    public int membership(Node x) {
+        int members=0;
+        for (int i = 0; i < 26; i++) {
+            if (children[i]!=null) {
+                if(children[i].terminal==true)
+                    members++;
+                    members+=children[i].membership(children[i]);
+                }
+        }
+       return members;
+    }
+
+    public void listAll(Node x, String s) {
+
+        for (int i = 0; i < 26; i++) {
+            if (children[i] != null) {
+                s += (char) (i + 97);
+                if (children[i].terminal == true) 
+                    System.out.println(s);
+                if (children[i].outDegree != 0) {
+                    children[i].listAll(children[i], s);
+                } 
+                s = s.substring(0, s.length() - 1);
+                }
+        }
+
+    }
+}
